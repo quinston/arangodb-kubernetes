@@ -1,0 +1,17 @@
+{
+  "name": "arangodb-kubernetes",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "agencyDeployment": "node getArangoDeployment.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "check-types": "^7.0.0",
+    "schema-inspector": "^1.6.5",
+    "type-check": "^0.3.2"
+  }
+}
