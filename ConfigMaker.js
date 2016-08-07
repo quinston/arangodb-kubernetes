@@ -33,26 +33,35 @@ module.exports = class ConfigMaker {
     return {
       name,
       image: this.dockerImageName,
-      args: [
-        `--server.endpoint tcp://0.0.0.0:${this.firstAgentInternalPort + agentId}`,
-        '--server.authentication false',
-        `--agency.id ${agentId}`,
-        `--agency.size ${this.noAgents}`,
-        '--agency.supervision true',
-        /* The below creates something like
-        --agency.endpoint tcp://localhost:5000
-        --agency.endpoint tcp://localhost:5001
-        --agency.endpoint tcp://localhost:5002
-        ...
-        --agency.endpoint tcp://localhost:5003
+      env: [
+        {
+          name: 'ARANGO_RANDOM_ROOT_PASSWORD',
+          value: '1'
+        }
+      ],
+      args:
+        `--server.endpoint tcp://0.0.0.0:${this.firstAgentInternalPort + agentId}
+        --server.authentication false
+        --agency.id ${agentId}
+        --agency.size ${this.noAgents}
+        --agency.supervision true
+        ${
+          /* The below creates something like
+          --agency.endpoint tcp://localhost:5000
+          --agency.endpoint tcp://localhost:5001
+          --agency.endpoint tcp://localhost:5002
+          ...
+          --agency.endpoint tcp://localhost:5003
 
-        where the list exhausts the addresses of all agents
-        and is in order of agent ID
-        */
-        ...(rangeFromZeroToXMinusOne(this.noAgents)
-        .map(i => `--agency.endpoint tcp://localhost:${this.firstAgentInternalPort + i}`)),
-        '--agency.notify true'
-      ]
+          where the list exhausts the addresses of all agents
+          and is in order of agent ID
+          */
+          (rangeFromZeroToXMinusOne(this.noAgents)
+          .map(i => `--agency.endpoint tcp://localhost:${this.firstAgentInternalPort + i}`))
+          .join(' ')
+        }
+        --agency.notify true`
+        .split(/\s+/)
     };
   }
 
@@ -61,14 +70,14 @@ module.exports = class ConfigMaker {
       apiVersion: 'extensions/v1beta1',
       kind: 'Deployment',
       metadata: {
-        name: 'arango-agency'
+        name: 'arangodb-agency'
       },
       spec: {
-        replicas: this.noAgents,
+        replicas: 1,
         template: {
           metadata: {
             labels: {
-              app: 'arango-agency'
+              app: 'arangodb-agency'
             }
           },
           spec: {
@@ -88,11 +97,12 @@ module.exports = class ConfigMaker {
       apiVersion: 'v1',
       kind: 'Service',
       metadata: {
-        name: 'arango-agency'
+        name: 'arangodb-agency'
       },
       spec: {
+        type: 'NodePort',
         selector: {
-          app: 'arango-agency'
+          app: 'arangodb-agency'
         },
         ports: rangeFromZeroToXMinusOne(this.noAgents)
         .map(i => ({

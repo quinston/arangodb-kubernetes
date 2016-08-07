@@ -1,6 +1,6 @@
 module.exports = {
-  noAgents: 20,
+  noAgents: 3,
   dockerImageName: "arangodb/arangodb:3.0.4",
-  firstAgentInternalPort: 5000,
+  firstAgentInternalPort: 6000,
   firstAgentNodePort: 37000
 };
