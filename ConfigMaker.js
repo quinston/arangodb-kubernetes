@@ -4,18 +4,23 @@ const rangeFromZeroToXMinusOne = x => [...Array(x).keys()];
 
 module.exports = class ConfigMaker {
   /*
-  Agents' ports are numbered consecuively starting at firstAgentPort
+  Agents' ports are numbered consecutively starting at firstAgentInternalPort
+
+  Externally they are numbered consecutively from firstAgentNodePort
   */
-  constructor({ noAgents, dockerImageName, firstAgentPort }) {
+  constructor({ noAgents, dockerImageName, firstAgentInternalPort, firstAgentNodePort }) {
     check.assert.positive(noAgents);
     check.assert.integer(noAgents);
     check.assert.nonEmptyString(dockerImageName);
-    check.assert.positive(firstAgentPort);
-    check.assert.integer(firstAgentPort);
+    check.assert.positive(firstAgentInternalPort);
+    check.assert.integer(firstAgentInternalPort);
+    check.assert.positive(firstAgentNodePort);
+    check.assert.integer(firstAgentNodePort);
 
     this.noAgents = noAgents;
     this.dockerImageName = dockerImageName;
-    this.firstAgentPort = firstAgentPort;
+    this.firstAgentInternalPort = firstAgentInternalPort;
+    this.firstAgentNodePort = firstAgentNodePort;
   }
 
 
@@ -29,7 +34,7 @@ module.exports = class ConfigMaker {
       name,
       image: this.dockerImageName,
       args: [
-        `--server.endpoint tcp://0.0.0.0:${this.firstAgentPort + agentId}`,
+        `--server.endpoint tcp://0.0.0.0:${this.firstAgentInternalPort + agentId}`,
         '--server.authentication false',
         `--agency.id ${agentId}`,
         `--agency.size ${this.noAgents}`,
@@ -45,7 +50,7 @@ module.exports = class ConfigMaker {
         and is in order of agent ID
         */
         ...(rangeFromZeroToXMinusOne(this.noAgents)
-        .map(i => `--agency.endpoint tcp://localhost:${this.firstAgentPort + i}`)),
+        .map(i => `--agency.endpoint tcp://localhost:${this.firstAgentInternalPort + i}`)),
         '--agency.notify true'
       ]
     };
@@ -76,5 +81,26 @@ module.exports = class ConfigMaker {
         }
       }
     }
+  }
+
+  get agencyService() {
+    return {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'arango-agency'
+      },
+      spec: {
+        selector: {
+          app: 'arango-agency'
+        },
+        ports: rangeFromZeroToXMinusOne(this.noAgents)
+        .map(i => ({
+          protocol: 'TCP',
+          targetPort: this.firstAgentInternalPort + i,
+          port: this.firstAgentNodePort + i
+        }))
+      }
+    };
   }
 };
