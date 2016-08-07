@@ -108,7 +108,8 @@ module.exports = class ConfigMaker {
         .map(i => ({
           protocol: 'TCP',
           targetPort: this.firstAgentInternalPort + i,
-          port: this.firstAgentNodePort + i
+          port: this.firstAgentNodePort + i,
+          name: `agent${i}`
         }))
       }
     };
