@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "agencyDeployment": "node getArangoDeployment.js",
-    "agencyService": "node getArangoService.js",
+    "agencyDeployment": "node getAgencyDeployment.js",
+    "agencyService": "node getAgencyService.js",
+    "primaryDeployment": "node getPrimaryDeployment.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
