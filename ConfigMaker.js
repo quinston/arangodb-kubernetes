@@ -236,4 +236,24 @@ module.exports = class ConfigMaker {
       }
     }
   }
+
+  get coordinatorService() {
+    return {
+      apiVersion: 'v1',
+      kind: 'Service',
+      metadata: {
+        name: 'arangodb-coordinator'
+      },
+      spec: {
+        type: 'LoadBalancer',
+        selector: {
+          app: 'arangodb-coordinator'
+        },
+        ports: [{
+          protocol: 'TCP',
+          port: 8529
+        }]
+      }
+    };
+  }
 };

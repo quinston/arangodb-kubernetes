@@ -7,13 +7,12 @@
     "agencyDeployment": "node getAgencyDeployment.js",
     "agencyService": "node getAgencyService.js",
     "primaryDeployment": "node getPrimaryDeployment.js",
-    "coordinatorDeployment": "node getCoordinatorDeployment.js"
+    "coordinatorDeployment": "node getCoordinatorDeployment.js",
+    "coordinatorService": "node getCoordinatorService.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "check-types": "^7.0.0",
-    "schema-inspector": "^1.6.5",
-    "type-check": "^0.3.2"
+    "check-types": "^7.0.0"
   }
 }
