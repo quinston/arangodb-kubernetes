@@ -10,24 +10,29 @@ module.exports = class ConfigMaker {
   */
   constructor({ noAgents,
     noPrimaries,
+    noCoordinators,
     dockerImageName,
     firstAgentInternalPort,
-    firstAgentNodePort }) {
-    check.assert.positive(noAgents);
-    check.assert.integer(noAgents);
-    check.assert.positive(noPrimaries);
-    check.assert.integer(noPrimaries);
-    check.assert.nonEmptyString(dockerImageName);
-    check.assert.positive(firstAgentInternalPort);
-    check.assert.integer(firstAgentInternalPort);
-    check.assert.positive(firstAgentNodePort);
-    check.assert.integer(firstAgentNodePort);
-
+    firstAgentNodePort
+  }) {
     this.noAgents = noAgents;
     this.noPrimaries = noPrimaries;
+    this.noCoordinators = noCoordinators
     this.dockerImageName = dockerImageName;
     this.firstAgentInternalPort = firstAgentInternalPort;
     this.firstAgentNodePort = firstAgentNodePort;
+
+    check.assert.positive(this.noAgents);
+    check.assert.integer(this.noAgents);
+    check.assert.positive(this.noPrimaries);
+    check.assert.integer(this.noPrimaries);
+    check.assert.positive(this.noCoordinators);
+    check.assert.integer(this.noCoordinators);
+    check.assert.nonEmptyString(this.dockerImageName);
+    check.assert.positive(this.firstAgentInternalPort);
+    check.assert.integer(this.firstAgentInternalPort);
+    check.assert.positive(this.firstAgentNodePort);
+    check.assert.integer(this.firstAgentNodePort);
   }
 
 
@@ -165,6 +170,61 @@ module.exports = class ConfigMaker {
               --cluster.my-local-info primary@$(MY_HOSTNAME)
               --cluster.my-address tcp://$(MY_HOSTNAME):$(MY_PORT)
               --cluster.my-role PRIMARY
+              ${rangeFromZeroToXMinusOne(this.noAgents)
+                .map(i => `--cluster.agency-endpoint tcp://arangodb-agency:${this.firstAgentNodePort + i}`)
+                .join(' ')
+              }`
+              .split(/\s+/)
+            }]
+          }
+        }
+      }
+    }
+  }
+
+  get coordinatorDeployment() {
+    return {
+      apiVersion: 'extensions/v1beta1',
+      kind: 'Deployment',
+      metadata: {
+        name: 'arangodb-coordinator'
+      },
+      spec: {
+        replicas: this.noCoordinators,
+        template: {
+          metadata: {
+            labels: {
+              app: 'arangodb-coordinator'
+            }
+          },
+          spec: {
+            containers: [{
+              name: 'arangodb-coordinator',
+              image: this.dockerImageName,
+              env: [
+                {
+                  name: 'ARANGO_RANDOM_ROOT_PASSWORD',
+                  value: '1'
+                },
+                {
+                  name: 'MY_HOSTNAME',
+                  valueFrom: {
+                    fieldRef: {
+                      fieldPath: 'status.podIP'
+                    }
+                  }
+                },
+                {
+                  name: 'MY_PORT',
+                  value: "8529"
+                }
+              ],
+              args:
+              `--server.authentication false
+              --server.endpoint tcp://0.0.0.0:$(MY_PORT)
+              --cluster.my-local-info coordinator@$(MY_HOSTNAME)
+              --cluster.my-address tcp://$(MY_HOSTNAME):$(MY_PORT)
+              --cluster.my-role COORDINATOR
               ${rangeFromZeroToXMinusOne(this.noAgents)
                 .map(i => `--cluster.agency-endpoint tcp://arangodb-agency:${this.firstAgentNodePort + i}`)
                 .join(' ')
